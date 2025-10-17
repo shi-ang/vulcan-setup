@@ -197,17 +197,17 @@ Once in the mainframe, activate your environment **which has jupyter installed**
 
 With your dev environment activated, start a notebook server:
 ```
-jupyter notebook --no-browser --port=8.8.8.8 --ip=0.0.0.0
+jupyter notebook --no-browser --ip=0.0.0.0 --port=8888
 ```
 You should see something like:
 ```
 To access the server, open this file in a browser:
-    file:///home/student/.local/share/jupyter/runtime/jpserver-1672444-open.html
+    file:///home/student/.local/share/jupyter/runtime/jpserver-599669-open.html
 Or copy and paste one of these URLs:
-    http://kn166:8888/tree?token=dfbbfd67f17383afea30eae3eb0ee7f1d0e20a642015fef1
-    http://127.0.0.1:8888/tree?token=dfbbfd67f17383afea30eae3eb0ee7f1d0e20a642015fef1
+    http://rack10-07:8889/tree?token=a45a30821a9679130f8d437530528a1e502df38393f4579b
+    http://127.0.0.1:8889/tree?token=a45a30821a9679130f8d437530528a1e502df38393f4579b
 ```
-Copy the line that contains ``kn:XYZ:8888/tree?...``. 
+Copy the line that contains ``rackXYZ:8889/tree?...``. 
 With your notebook open in your VSCode client, click on "Select Kernel" &#8594; "Select Another Kernel" &#8594; "Existing Jupyter Server" &#8594; paste here &#8594; click Enter &#8594; "Python 3 (ipykernel)" and you're in!
 
 It's recommended that right after you grab resources and ``slurm`` sends you to node ``knXYZ``, that you ``tmux`` right away, put your jupyter instance on a ``tmux`` session, then detach. In this way, you still have a terminal for ``knXYZ``, otherwise your only compute node terminal is running your ``jupyter`` server. 
