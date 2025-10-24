@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name="my_job"
+#SBATCH --job-name=my_job
 #SBATCH -A aip-supervisor
 #SBATCH -c 12
 #SBATCH --mem=64G
@@ -8,6 +8,8 @@
 #SBATCH --open-mode=append
 #SBATCH --output=logs/slurm_%j.out
 #SBATCH --error=logs/slurm_%j.err
+#SBATCH --mail-user=name@email.com
+#SBATCH --mail-type=ALL
 
 # activate environment
 source ~/my_env/bin/activate

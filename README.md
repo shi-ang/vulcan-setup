@@ -1,9 +1,9 @@
-# Killarney Setup
+# Vulcan Setup
 
-This helps you set up your dev environment on Killarney. Assume you already have a CCDB account, and your PI has added you to their allocation. For the purposes of this guide, we will use ``aip-supervisor`` as PI allocation, and ``student`` as user. These are simply examples, customize depending on your needs and configurations. We recommend you follow this guide in order. 
+This helps you set up your dev environment on Vulcan (or Killarney). Assume you already have a CCDB account, and your PI has added you to their allocation. For the purposes of this guide, we will use ``aip-supervisor`` as PI allocation, and ``student`` as user. These are simply examples, customize depending on your needs and configurations. We recommend you follow this guide in order. 
 
 ## Table of Contents
-- [Killarney Setup](#killarney-setup)
+- [Vulcan Setup](#vulcan-setup)
     - [``starship``](#starship)
     - [Login](#login)
         - [Hopping between login nodes](#hopping-between-login-nodes)
@@ -51,7 +51,7 @@ Add your ED25519 and RSA keys of your home machine to https://ccdb.alliancecan.c
 Once that's done, you are free to ``ssh``: 
 
 ```
-ssh student@killarney.alliancecan.ca
+ssh student@vulcan.alliancecan.ca
 ```
 
 You should be dropped in ``/home/student``.
@@ -63,22 +63,36 @@ If you want to hop between login nodes, you have to forward your identity from y
 1. Run ``ssh-add -l`` to check if your SSH agent registered your keys.
 2. If not, add each of your IDs with ``ssh-add``. They should be by default in ``~/.ssh/``.
 
-From now on, SSH to Killarney with the ``-A`` flag to forward your identity, allowing you to subsequently hop between ``klogin0X`` nodes freely.
+From now on, SSH to Vulcan with the ``-A`` flag to forward your identity
+```
+ssh -A student@vulcan1.alliancecan.ca
+```
+to ``vulcan1``.
+
+Or within a Vulcan login node,
+```
+ssh vulcanX
+```
+allows you to hop between ``vulcan1`` and ``vulcan2`` nodes freely (there are currently only two login nodes in Vulcan).
+
+
 
 ### Home machine aliasing
 
-Add this to your ``~/.bashrc`` or ``~/.zshrc``:
+This snippet creates a short alias on your local machine so that you don’t have to type the full SSH command every time you log in to the cluster.
 
+Add this to your ``~/.bashrc`` or ``~/.zshrc`` (depending on which shell you use, Linux uses bash by default, macOS uses zsh by default):
+Then add the following line at the end of the file:
 ```
-alias k="ssh -A student@killarney.alliancecan.ca"
+alias short_name="ssh student@vulcan.alliancecan.ca"
 ```
-Then source it. You can now type ``k`` in your terminal and get sent to your happy place. 
+Then source it. You can now type ``short_name`` in your terminal and get sent to your happy place.  
 
 ## Setup a ``code`` tunnel
 
 ### Install the ``code`` server
 
-On Killarney, run the following:
+On Vulcan, run the following:
 
 ```
 cd ~/projects/aip-supervisor/student
@@ -119,6 +133,43 @@ tmux attach
 
 and we're back.
 
+To end the tunnel connection, simply type ``Ctrl C`` in the tmux session.
+
+To end the tmux session, type ``exit`` in the tmux session.
+
+Possible errors:
+- If you see an error about port conflicts, it means your previous ``code tunnel`` is still running somewhere. Find it and kill it.
+The recommended way is to hop on the login node where you created your tmux session, attach the tmux session, and ``Ctrl C`` the ``code tunnel`` process.
+However, if you forgot which login node you created it on, from any login node, run:
+    ```
+    # see what’s still around
+    ps -fu "$USER" | egrep 'code(-server)?|vscode|tunnel' | grep -v egrep
+
+    # terminate nicely, then force if needed
+    pkill -f 'code.*tunnel'        2>/dev/null
+    pkill -f 'vscode.*server'      2>/dev/null
+    sleep 1
+    pkill -9 -f 'code.*tunnel'     2>/dev/null
+    pkill -9 -f 'vscode.*server'   2:/dev/null
+    ```
+    Then we need to make sure there are no leftover lock files that prevent ``code tunnel`` from starting up again.
+    Common places the tunnel/server drops singleton/lock files:
+    ```
+    # typical tunnel CLI locks
+    find ~/.vscode -type f -iname '*singleton*' -o -iname '*lock*' 2>/dev/null
+
+    # VS Code Server (remote) locks
+    find ~/.vscode-server -maxdepth 2 -type f -iname '*lock*' -o -iname '.pid' 2>/dev/null
+    ```
+    If you see files like:
+    * `~/.vscode/cli/**/tunnel-socket-singleton.lock`
+    * `~/.vscode-server/<commit>/.pid`
+    * `~/.vscode-server/<commit>/vscode-remote-lock.*`
+
+    remove them and try again.
+- If you see an error about authentication, make sure your VSCode client is logged in with the same account you used to authenticate the ``code tunnel``.
+
+
 ## ``srun`` jobs: interactive session
 
 From now on, we assume development is done on your VSCode client that is properly tunneled to a login node. 
@@ -133,9 +184,9 @@ This will be where you develop and spend most of your time in.
 You want to borrow some GPUs. In your login node (VSCode client's terminal will be hosted on the same login node you launched ``tmux``):
 
 ```
-srun -A aip-supervisor -c 8 --gres=gpu:l40s:2 --mem=128G --time=1-00:00:00 --pty bash
+srun -A aip-supervisor -c 8 --gres=gpu:l40s:2 --mem=128G --time=0-08:00:00 --pty bash
 ```
-You have successfully borrowed 8 cores, 2 L40S GPUs, and 128G of RAM for 1 day. You can either borrow ``l40s`` or ``h100``. 
+You have successfully borrowed 8 cores, 2 L40S GPUs, and 128G of RAM for 8 hours. Vulcan only has ``l40s`` but Killarney has both ``l40s`` or ``h100``. 
 
 ## ``sbatch`` jobs: 
 
@@ -190,7 +241,7 @@ You want to run ``debug.ipynb`` in your repo, but your VSCode client is hooked t
 From your terminal, get some resources:
 
 ```
-srun -A aip-supervisor -c 8 --gres=gpu:l40s:2 --mem=128G --time=1-00:00:00 --pty bash
+srun -A aip-supervisor -c 8 --gres=gpu:l40s:2 --mem=128G --time=0-08:00:00 --pty bash
 ```
 
 Once in the mainframe, activate your environment **which has jupyter installed**, otherwise install with ``uv pip install jupyter``. 
@@ -210,7 +261,7 @@ Or copy and paste one of these URLs:
 Copy the line that contains ``rackXYZ:8889/tree?...``. 
 With your notebook open in your VSCode client, click on "Select Kernel" &#8594; "Select Another Kernel" &#8594; "Existing Jupyter Server" &#8594; paste here &#8594; click Enter &#8594; "Python 3 (ipykernel)" and you're in!
 
-It's recommended that right after you grab resources and ``slurm`` sends you to node ``knXYZ``, that you ``tmux`` right away, put your jupyter instance on a ``tmux`` session, then detach. In this way, you still have a terminal for ``knXYZ``, otherwise your only compute node terminal is running your ``jupyter`` server. 
+It's recommended that right after you grab resources and ``slurm`` sends you to node ``rackXYZ``, that you ``tmux`` right away, put your jupyter instance on a ``tmux`` session, then detach. In this way, you still have a terminal for ``rackXYZ``, otherwise your only compute node terminal is running your ``jupyter`` server. 
 
 ### ``sbatch``-ing your ``jupyter`` server
 Yes you can do it. Make a ``sbatch_jupyter.slrm`` with the desired resource configuration, make sure to configure the output to write into some file somewhere so that you can read the URL in order to paste into your VSCode client's kernel selector. 
