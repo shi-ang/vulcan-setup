@@ -123,10 +123,10 @@ In your ``tmux`` session, run:
 
 Authenticate with either GitHub or Microsoft. Once that's done, detach the tmux session with ``Ctrl B + D``. You can forget about it. Now you can dev on your VSCode client. 
 
-If you need to restart it, first make sure you **hop on the login node where you created your tmux session**, then attach your tmux session back. If you left it in ``klogin0X``, from any login node, run: 
+If you need to restart it, first make sure you **hop on the login node where you created your tmux session**, then attach your tmux session back. If you left it in ``rackXYZ``, from any login node, run: 
 
 ```
-ssh klogin0X
+ssh rackXYZ
 
 tmux attach
 ```
