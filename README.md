@@ -201,11 +201,13 @@ There is no ``anaconda`` or ``miniconda``. You should use ``uv``.
 
 Get Rust loaded up (``uv`` uses rust):
 
-``module load rust/1.85``
+```
+module load rust/1.85
+```
 
 Install ``uv``:
 ```
-curl -LsSf https://astral.sh/uv/install.sh | sh
+wget -qO- https://astral.sh/uv/install.sh | sh
 ```
 
 Create a virtual environment with ``uv`` and Python 3.11:
