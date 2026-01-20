@@ -15,6 +15,7 @@ This helps you set up your dev environment on Vulcan (or Killarney). Assume you 
     - [``sbatch`` jobs](#sbatch-jobs)
     - [Configure your ``python`` environments](#configure-your-python-environments)
         - [IMPORTANT! ``wandb`` ](#important-wandb)
+    - [Debugging via ``debugpy`` on the server](#debugging-via-debugpy-on-the-server) 
     - [Run a ``jupyter`` server](#run-a-jupyter-server)
         - [``sbatch``-ing your ``jupyter`` server](#sbatch-ing-your-jupyter-server)
 - [Distributed training](#distributed-training)
@@ -123,10 +124,10 @@ In your ``tmux`` session, run:
 
 Authenticate with either GitHub or Microsoft. Once that's done, detach the tmux session with ``Ctrl B + D``. You can forget about it. Now you can dev on your VSCode client. 
 
-If you need to restart it, first make sure you **hop on the login node where you created your tmux session**, then attach your tmux session back. If you left it in ``rackXYZ``, from any login node, run: 
+If you need to restart it, first make sure you **hop on the login node where you created your tmux session**, then attach your tmux session back. If you left it in ``rackXX-XX``, from any login node, run: 
 
 ```
-ssh rackXYZ
+ssh rackXX-XX
 
 tmux attach
 ```
@@ -236,9 +237,86 @@ From now on, for each job, manually activate your environment by sourcing the ``
 
 If you use the provided ``pip``, it installs packages based on a cached database of packages. The cached ``wandb`` is **bugged**. Upon importing and running ``wandb.init(...)``, it will throw an error saying ``wandb-core`` is missing. This is why we use ``uv``, among a multitude of other reasons. 
 
+## Debugging via ``debugpy`` on the server
+
+By default, VSCode “Run/Debug” launches **where your VS Code tunnel/server is running**. If your tunnel is on a login node, pressing `F5` will run your program on the login node — which is not what you want for GPU/CPU-heavy jobs.
+
+To debug on a **compute node**, use the following workflow:
+
+From your terminal, get some resources:
+
+```bash
+srun -A aip-supervisor -c 8 --gres=gpu:l40s:1 --mem=128G --time=0-08:00:00 --pty bash
+```
+
+You should be able to see your host name (usually with name as ``rackXX-XX``) for the compute node. Or you can type
+
+```bash
+hostname
+```
+to get the host name.
+
+Activate your env, and make sure debugpy is installed:
+
+```bash
+uv pip install debugpy
+```
+
+Now run your script with a debug listener:
+
+```bash
+python -m debugpy --listen 0.0.0.0:8888 --wait-for-client path/to/script.py --arg1 ... --arg2 ...
+```
+
+Where the flag `--listen 0.0.0.0:8888` mean:
+
+- `0.0.0.0`: IP address
+- `8888`: port number, you can use any unused port (>1024 recommended). If you change it, update json file too.
+
+In VSCode (connected via tunnel), create .vscode/launch.json with an attach config:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach (Slurm compute node / debugpy)",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "REPLACE_WITH_COMPUTE_NODE_HOSTNAME",
+        "port": 8888
+      }
+    }
+  ]
+}
+```
+
+- Set "host" to the compute node name you got from hostname (e.g., `rackXX-XX`) or from hostname -f.
+- Set "port" to the port number you defined above. 
+
+Now you can open Run and Debug (left sidebar), pick Attach (Slurm compute node / debugpy), then press F5 (or click ▶).
+
+### Common issues & fixes
+
+If you encounter
+```
+RuntimeError: Can't listen for client connections: [Errno 98] Address already in use
+```
+This means the port is already taken (often because an earlier debug process is still running). You can check who is listening:
+```bash
+ss -ltnp | grep {PORT_NUMBER}
+```
+If you accidentally stopped the job, it may still hold the port: find the job and kill it
+```bash
+jobs -l
+kill -9 JOB_NUMBER
+```
+Or just switch to a new port numbew.
+
 ## Run a ``jupyter`` server
 
-You want to run ``debug.ipynb`` in your repo, but your VSCode client is hooked to ``klogin0X``. You want the big machines to run your notebook instead. Assume your VSCode client has the Jupyter extension installed.
+You want to run ``debug.ipynb`` in your repo, but your VSCode client is hooked to a login node. You want the big machines to run your notebook instead. Assume your VSCode client has the Jupyter extension installed.
 
 From your terminal, get some resources:
 
@@ -260,10 +338,10 @@ Or copy and paste one of these URLs:
     http://rack10-07:8889/tree?token=a45a30821a9679130f8d437530528a1e502df38393f4579b
     http://127.0.0.1:8889/tree?token=a45a30821a9679130f8d437530528a1e502df38393f4579b
 ```
-Copy the line that contains ``rackXYZ:8889/tree?...``. 
+Copy the line that contains ``rackXX-XX:8889/tree?...``. 
 With your notebook open in your VSCode client, click on "Select Kernel" &#8594; "Select Another Kernel" &#8594; "Existing Jupyter Server" &#8594; paste here &#8594; click Enter &#8594; "Python 3 (ipykernel)" and you're in!
 
-It's recommended that right after you grab resources and ``slurm`` sends you to node ``rackXYZ``, that you ``tmux`` right away, put your jupyter instance on a ``tmux`` session, then detach. In this way, you still have a terminal for ``rackXYZ``, otherwise your only compute node terminal is running your ``jupyter`` server. 
+It's recommended that right after you grab resources and ``slurm`` sends you to node ``rackXX-XX``, that you ``tmux`` right away, put your jupyter instance on a ``tmux`` session, then detach. In this way, you still have a terminal for ``rackXX-XX``, otherwise your only compute node terminal is running your ``jupyter`` server. 
 
 ### ``sbatch``-ing your ``jupyter`` server
 Yes you can do it. Make a ``sbatch_jupyter.slrm`` with the desired resource configuration, make sure to configure the output to write into some file somewhere so that you can read the URL in order to paste into your VSCode client's kernel selector. 
