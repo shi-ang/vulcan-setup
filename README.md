@@ -297,22 +297,18 @@ In VSCode (connected via tunnel), create .vscode/launch.json with an attach conf
 
 Now you can open Run and Debug (left sidebar), pick Attach (Slurm compute node / debugpy), then press F5 (or click ▶).
 
-### Common issues & fixes
+### End the Debugger
 
-If you encounter
-```
-RuntimeError: Can't listen for client connections: [Errno 98] Address already in use
-```
-This means the port is already taken (often because an earlier debug process is still running). You can check who is listening:
-```bash
-ss -ltnp | grep {PORT_NUMBER}
-```
-If you accidentally stopped the job, it may still hold the port: find the job and kill it
-```bash
-jobs -l
-kill -9 JOB_NUMBER
-```
-Or just switch to a new port numbew.
+To stop that debuging process, you eend to stop that Python process, then detach debugger from the VS Code, and check if the process got orphaned.
+
+1. Use Disconnect/`Shift+F5` to detach the debugger.
+2. If the process is still running in the terminal foreground, press `Ctrl+C` in that terminal.
+3. If the process is in the background or got orphaned. Find and kill the server-side Python process, for example
+   ```bash
+   lsof -i :8888
+   kill <PID>
+   ```
+   where `8888` can be replaced by any port number you used.
 
 ## Run a ``jupyter`` server
 
