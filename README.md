@@ -122,7 +122,7 @@ In your ``tmux`` session, run:
 /home/student/projects/aip-supervisor/student/code tunnel
 ```
 
-Authenticate with either GitHub or Microsoft. Once that's done, detach the tmux session with ``Ctrl B + D``. You can forget about it. Now you can dev on your VSCode client. 
+Authenticate with either GitHub or Microsoft. Once that's done, detach the tmux session with ``Ctrl + B`` then press ``D``. You can forget about it. Now you can dev on your VSCode client. 
 
 If you need to restart it, first make sure you **hop on the login node where you created your tmux session**, then attach your tmux session back. If you left it in ``rackXX-XX``, from any login node, run: 
 
